@@ -11,6 +11,8 @@ This analyzes what happened in some period of time and spits out stats.
    This has to run in Python 2.7.5 which is what's on the grep hosts. Blech.
 
 """
+
+import argparse
 from collections import namedtuple
 import sys
 
@@ -82,16 +84,18 @@ def parse_line(line):
     return data
 
 
-def parse_file(start_date, end_date, filename):
+def parse_files(start_date, end_date, filenames):
     """Parses a file looking at records between bounded dates
 
     :arg str start_date: the start date as "YYYY-mm-dd HH:MM:SS"
     :arg str end_date: the end date as "YYYY-mm-dd HH:MM:SS"
-    :arg str filename: the name of the file to slurp
+    :arg list filenames: the list of files to look at
 
     :returns: ``(hostinfo_map, crashes_in, crashes_out)``
 
     """
+    filenames = set(filenames)
+
     lines = 0
     lines_beyond_end_date = 0
 
@@ -102,51 +106,62 @@ def parse_file(start_date, end_date, filename):
     crashes_in = {}
     crashes_out = {}
 
-    with open(filename, 'r') as fp:
-        for line in fp:
-            if not line.startswith('[') or '[ANTENNA' not in line:
-                continue
+    for filename in filenames:
+        with open(filename, 'r') as fp:
+            for line in fp:
+                if not line.startswith('[') or '[ANTENNA' not in line:
+                    continue
 
-            timestamp = line[1:20]
-            if timestamp < start_date:
-                continue
+                timestamp = line[1:20]
+                if timestamp < start_date:
+                    continue
 
-            if timestamp > end_date:
-                lines_beyond_end_date += 1
-                if lines_beyond_end_date > 5000:
-                    break
+                if timestamp > end_date:
+                    lines_beyond_end_date += 1
+                    if lines_beyond_end_date > 5000:
+                        break
 
-            data = parse_line(line.strip())
-            if not data or not data.crashid:
-                continue
+                data = parse_line(line.strip())
+                if not data or not data.crashid:
+                    continue
 
-            lines += 1
+                lines += 1
 
-            if data.host not in hostinfo_map:
-                host, pid = data.host.split(' ')
-                hostinfo_map[data.host] = HostInfo(host, pid, start=data.timestamp)
+                if data.host not in hostinfo_map:
+                    host, pid = data.host.split(' ')
+                    hostinfo_map[data.host] = HostInfo(host, pid, start=data.timestamp)
 
-            hostinfo = hostinfo_map[data.host]
-            hostinfo.stop = data.timestamp
+                hostinfo = hostinfo_map[data.host]
+                hostinfo.stop = data.timestamp
 
-            # Only count receives before the end date
-            if data.action == RECEIVE and data.timestamp < end_date:
-                crashes_in[data.crashid] = data
-                hostinfo.crashes_in.append(data.crashid)
+                # Only count receives before the end date
+                if data.action == RECEIVE and data.timestamp < end_date:
+                    crashes_in[data.crashid] = data
+                    hostinfo.crashes_in.append(data.crashid)
 
-            elif data.action == SAVE:
-                if data.timestamp < end_date or data.crashid in crashes_in:
-                    crashes_out[data.crashid] = data
-                    hostinfo.crashes_out.append(data.crashid)
+                elif data.action == SAVE:
+                    if data.timestamp < end_date or data.crashid in crashes_in:
+                        crashes_out[data.crashid] = data
+                        hostinfo.crashes_out.append(data.crashid)
 
     print 'lines: %d' % lines
     return hostinfo_map, crashes_in, crashes_out
 
 
 def main(args):
-    hostinfo_map, crashes_in, crashes_out = parse_file(*args)
+    parser = argparse.ArgumentParser(
+        description='Antenna log parser',
+        epilog='For more information, see https://github.com/willkg/antenna-log-parser'
+    )
+    parser.add_argument('start', help='start date/time--substring of YYYY-MM-DD HH:MM')
+    parser.add_argument('end', help='end date/time--substring of YYYY-MM-DD HH:MM')
+    parser.add_argument('filename', help='log files', nargs='*')
 
-    print 'From %s to %s' % (args[0], args[1])
+    args = parser.parse_args()
+
+    hostinfo_map, crashes_in, crashes_out = parse_files(args.start, args.end, args.filename)
+
+    print 'From %s to %s' % (args.start, args.end)
     print ''
     print 'total crashes in:  %d' % len(crashes_in)
     print 'total crashes out: %d' % len(crashes_out)
