@@ -1,0 +1,23 @@
+[2017-03-20 20:05:56 +0000] [ANTENNA ip-172-31-15-19 10] [DEBUG] antenna.heartbeat: thump
+[2017-03-20 20:05:56 +0000] [ANTENNA ip-172-31-15-19 9] [DEBUG] antenna.heartbeat: thump
+[2017-03-20 20:05:56 +0000] [ANTENNA ip-172-31-15-19 11] [DEBUG] antenna.heartbeat: thump
+[2017-03-20 20:06:00 +0000] [ANTENNA ip-172-31-58-252 13] [DEBUG] antenna.heartbeat: thump
+[2017-03-20 20:06:00 +0000] [ANTENNA ip-172-31-15-19 9] [INFO] antenna.breakpad_resource: 34203f76-7964-4e5e-be31-2c7c81170320: matched by is_firefox_desktop; returned DEFER
+[2017-03-20 20:06:01 +0000] [ANTENNA ip-172-31-58-252 14] [DEBUG] antenna.heartbeat: thump
+[2017-03-20 20:06:01 +0000] [ANTENNA ip-172-31-15-19 10] [INFO] antenna.breakpad_resource: b992b94f-39ef-47c1-82d4-5871b1170320: matched by is_firefox_desktop; returned DEFER
+[2017-03-20 20:06:01 +0000] [ANTENNA ip-172-31-15-19 9] [INFO] antenna.breakpad_resource: 34203f76-7964-4e5e-be31-2c7c81170320 saved
+[2017-03-20 20:06:02 +0000] [ANTENNA ip-172-31-36-31 12] [DEBUG] antenna.heartbeat: thump
+[2017-03-20 20:06:02 +0000] [ANTENNA ip-172-31-36-31 10] [DEBUG] antenna.heartbeat: thump
+[2017-03-20 20:06:02 +0000] [ANTENNA ip-172-31-36-31 11] [DEBUG] antenna.heartbeat: thump
+[2017-03-20 20:06:02 +0000] [ANTENNA ip-172-31-36-31 13] [DEBUG] antenna.heartbeat: thump
+[2017-03-20 20:06:02 +0000] [ANTENNA ip-172-31-15-19 11] [INFO] antenna.breakpad_resource: f061bfcc-18bd-4789-9663-8e68c2170320: matched by NO_MATCH; returned REJECT
+[2017-03-20 20:06:02 +0000] [ANTENNA ip-172-31-41-251 13] [INFO] antenna.breakpad_resource: 46ac1610-b753-4099-9990-17d372170320: matched by NO_MATCH; returned REJECT
+[2017-03-20 20:06:02 +0000] [ANTENNA ip-172-31-36-31 9] [DEBUG] antenna.heartbeat: thump
+[2017-03-20 20:06:02 +0000] [ANTENNA ip-172-31-15-19 12] [INFO] antenna.breakpad_resource: a23fefd8-60cb-455c-8aae-6c43b1170320 saved
+[2017-03-20 20:06:02 +0000] [ANTENNA ip-172-31-15-19 12] [INFO] antenna.breakpad_resource: a23fefd8-60cb-455c-8aae-6c43b1170320: matched by is_firefox_desktop; returned DEFER
+[2017-03-20 20:06:01 +0000] [ANTENNA ip-172-31-58-252 11] [DEBUG] antenna.heartbeat: thump
+[2017-03-20 20:06:01 +0000] [ANTENNA ip-172-31-58-252 15] [DEBUG] antenna.heartbeat: thump
+[2017-03-20 20:06:01 +0000] [ANTENNA ip-172-31-58-252 12] [DEBUG] antenna.heartbeat: thump
+[2017-03-20 20:06:02 +0000] [ANTENNA ip-172-31-15-19 10] [INFO] antenna.breakpad_resource: b992b94f-39ef-47c1-82d4-5871b1170320 saved
+[2017-03-20 20:06:05 +0000] [ANTENNA ip-172-31-41-251 13] [DEBUG] antenna.metrics: metrics batch: [('antenna.breakpad_resource.BreakpadSubmitterResource.incoming_crash', 1), ('antenna.breakpad_resource.BreakpadSubmitterResource.throttle.reject', 1)]
+[2017-03-20 20:06:05 +0000] [ANTENNA ip-172-31-41-251 13] [DEBUG] antenna.heartbeat: thump
