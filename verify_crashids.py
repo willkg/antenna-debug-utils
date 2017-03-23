@@ -35,11 +35,15 @@ def main(args):
 
     conn = get_conn()
 
-    lines = 0
+    successes = lines = 0
     failed = []
 
     with open(fn, 'r') as fp:
         for crashid in fp:
+            lines += 1
+            if lines % 1000:
+                print(lines)
+
             crashid = crashid.strip()
 
             try:
@@ -47,14 +51,14 @@ def main(args):
                     Bucket=BUCKET,
                     Key=crashid_to_key(crashid)
                 )
-                lines += 1
+                successes += 1
 
             except Exception as exc:
-                print('FAIL: %s: %s' % (crashid, exc))
-                failed.append(crashid)
+                failed.append((crashid, str(exc)))
 
-    print('Total crashes checked: %d' % lines)
-    print('Total fails: %d' % len(failed))
+    print('Total lines: %d' % lines)
+    print('  Success: %d' % successes)
+    print('  Fails:   %d' % len(failed))
     for fail in failed:
         print(fail)
 
