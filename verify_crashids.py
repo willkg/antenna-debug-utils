@@ -1,7 +1,11 @@
+from gevent import monkey; monkey.patch_all()  # noqa
+
+import gevent
+from queue import Queue
 import sys
 
 import boto3
-from botocore.client import ClientError, Config
+from botocore.client import Config
 
 
 BUCKET=''
@@ -30,33 +34,57 @@ def crashid_to_key(crashid):
     )
 
 
+CRASHES = Queue()
+RESULTS = []
+
+
+def worker(conn):
+    total = successes = 0
+    failed = []
+
+    while True:
+        if not CRASHES:
+            break
+
+        crashid = CRASHES.get()
+
+        total += 1
+
+        try:
+            conn.head_object(
+                Bucket=BUCKET,
+                Key=crashid_to_key(crashid)
+            )
+            successes += 1
+        except Exception as exc:
+            failed.append((crashid, exc))
+        CRASHES.task_done()
+
+    RESULTS.append((total, successes, failed))
+
+
 def main(args):
     fn = args[0]
 
     conn = get_conn()
 
-    successes = lines = 0
-    failed = []
-
     with open(fn, 'r') as fp:
         for crashid in fp:
-            lines += 1
-            if lines % 1000:
-                print(lines)
+            CRASHES.put(crashid)
 
-            crashid = crashid.strip()
+    workers = [gevent.spawn(worker, conn) for i in range(10)]
 
-            try:
-                conn.head_object(
-                    Bucket=BUCKET,
-                    Key=crashid_to_key(crashid)
-                )
-                successes += 1
+    gevent.joinall(workers)
 
-            except Exception as exc:
-                failed.append((crashid, str(exc)))
+    total = successes = 0
+    failed = []
 
-    print('Total lines: %d' % lines)
+    for res in RESULTS:
+        total += res[0]
+        successes += res[1]
+        failed.extend(res[2])
+
+    print('Total lines: %d' % total)
     print('  Success: %d' % successes)
     print('  Fails:   %d' % len(failed))
     for fail in failed:
@@ -64,4 +92,5 @@ def main(args):
 
 
 if __name__ == '__main__':
+    gevent.monkey
     sys.exit(main(sys.argv[1:]))
