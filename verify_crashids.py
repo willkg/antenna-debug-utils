@@ -1,11 +1,39 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+"""Verifies crash ids exist in s3 bucket
+
+Given a list of crashids, this script goes through the list and verifies
+they are all in the bucket.
+
+Requires:
+
+* Python 3.5
+* gevent
+* boto3
+
+Usage::
+
+    python3 verify_crashids.py [FILENAME]
+
+
+.. NOTE::
+
+   You have to edit the script and fill in the BUCKET and REGION values.
+
+   FIXME(willkg): We should change that to be params.
+
+"""
+
 from gevent import monkey; monkey.patch_all()  # noqa
 
-import gevent
-from queue import Queue
+from collections import deque
 import sys
 
 import boto3
 from botocore.client import Config
+import gevent
 
 
 BUCKET=''
@@ -34,47 +62,58 @@ def crashid_to_key(crashid):
     )
 
 
-CRASHES = Queue()
+CRASHES = deque()
 RESULTS = []
+PER_SEC = 0
 
 
-def worker(conn):
+def worker(id_, conn):
+    global PER_SEC
+
     total = successes = 0
     failed = []
 
-    while True:
-        if not CRASHES:
-            break
-
-        crashid = CRASHES.get()
+    while CRASHES:
+        crashid = CRASHES.pop()
 
         total += 1
+        PER_SEC += 1
 
         try:
+            key = crashid_to_key(crashid)
             conn.head_object(
                 Bucket=BUCKET,
-                Key=crashid_to_key(crashid)
+                Key=key,
             )
             successes += 1
         except Exception as exc:
+            print('FAIL: %s %s' % (crashid, exc))
             failed.append((crashid, exc))
-        CRASHES.task_done()
 
     RESULTS.append((total, successes, failed))
 
 
 def main(args):
+    global PER_SEC
+
     fn = args[0]
 
     conn = get_conn()
 
     with open(fn, 'r') as fp:
         for crashid in fp:
-            CRASHES.put(crashid)
+            CRASHES.append(crashid.strip())
 
-    workers = [gevent.spawn(worker, conn) for i in range(10)]
+    workers = [gevent.spawn(worker, i, conn) for i in range(10)]
+    total = 0
 
-    gevent.joinall(workers)
+    while CRASHES:
+        total += PER_SEC
+        print('%d %d/s' % (total, PER_SEC))
+        PER_SEC = 0
+        gevent.sleep(1)
+
+    gevent.sleep(5)
 
     total = successes = 0
     failed = []
@@ -92,5 +131,4 @@ def main(args):
 
 
 if __name__ == '__main__':
-    gevent.monkey
     sys.exit(main(sys.argv[1:]))
