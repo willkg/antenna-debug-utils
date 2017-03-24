@@ -9,8 +9,8 @@ wrote it very quickly to help me figure out how load tests were going.
 :Author: Will Kahn-Greene
 
 
-Quickstart
-==========
+Quickstart for log parser
+=========================
 
 This uses Python 2.7 without any additional dependencies.
 
