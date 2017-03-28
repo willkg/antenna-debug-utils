@@ -6,10 +6,6 @@
 
 This analyzes what happened in some period of time and spits out stats.
 
-.. Note::
-
-   This has to run in Python 2.7.5 which is what's on the grep hosts. Blech.
-
 """
 
 import argparse
@@ -144,7 +140,7 @@ def parse_files(start_date, end_date, filenames):
                         crashes_out[data.crashid] = data
                         hostinfo.crashes_out.append(data.crashid)
 
-    print 'lines: %d' % lines
+    print('lines: %d' % lines)
     return hostinfo_map, crashes_in, crashes_out
 
 
@@ -161,15 +157,15 @@ def main(args):
 
     hostinfo_map, crashes_in, crashes_out = parse_files(args.start, args.end, args.filename)
 
-    print 'From %s to %s' % (args.start, args.end)
-    print ''
-    print 'total crashes in:  %d' % len(crashes_in)
-    print 'total crashes out: %d' % len(crashes_out)
-    print ''
+    print('From %s to %s' % (args.start, args.end))
+    print()
+    print('total crashes in:  %d' % len(crashes_in))
+    print('total crashes out: %d' % len(crashes_out))
+    print()
 
-    print 'Hosts (%d):' % len(hostinfo_map)
+    print('Hosts (%d):' % len(hostinfo_map))
     for host, hostinfo in sorted(hostinfo_map.items()):
-        print '   %20s %4s %28s %28s %6s %6s %s' % (
+        print('   %20s %4s %28s %28s %6s %6s %s' % (
             hostinfo.host,
             hostinfo.pid,
             hostinfo.start,
@@ -177,22 +173,23 @@ def main(args):
             len(hostinfo.crashes_in),
             len(hostinfo.crashes_out),
             (len(hostinfo.crashes_in) == len(hostinfo.crashes_out))
-        )
-    print ''
+        ))
+    print('')
 
     in_set = set(crashes_in.keys())
     out_set = set(crashes_out.keys())
 
-    print 'Received but not saved (%d):' % len((in_set - out_set))
+    print('Received but not saved (%d):' % len((in_set - out_set)))
     for crashid in (in_set - out_set):
-        print '   %s' % (crashes_in[crashid],)
+        print('   %s' % (crashes_in[crashid],))
 
-    print 'Saved but not received (%d):' % len((out_set - in_set))
+    print('Saved but not received (%d):' % len((out_set - in_set)))
     for crashid in (out_set - in_set):
-        print '   %s' % (crashes_out[crashid],)
+        print('   %s' % (crashes_out[crashid],))
 
 
 def cli_main():
+    # FIXME(willkg): Fix argument parsing here
     sys.exit(main(sys.argv[1:]))
 
 

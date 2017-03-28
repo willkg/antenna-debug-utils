@@ -8,7 +8,7 @@ import os
 
 
 READMEFILE = 'README.rst'
-VERSIONFILE = os.path.join('debugutils', '__init__.py')
+VERSIONFILE = os.path.join('antenna_debug_utils', '__init__.py')
 VSRE = r"""^__version__ = ['"]([^'"]*)['"]"""
 
 
@@ -33,9 +33,9 @@ setup(
     install_requires=[],
     entry_points="""
         [console_scripts]
-        faux-processor=debugutils.faux_processor:cli_main
-        log-parser=debugutils.log-parser:main
-        verify-crashids=debugutils.verify-crashids:main
+        faux-processor=antenna_debug_utils.faux_processor:cli_main
+        log-parser=antenna_debug_utils.log_parser:main
+        verify-crashids=antenna_debug_utils.verify_crashids:main
     """,
     classifiers=[
         'Development Status :: 3 - Alpha',

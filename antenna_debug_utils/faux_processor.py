@@ -157,6 +157,7 @@ def main(args):
 
 
 def cli_main():
+    # FIXME(willkg): Fix argument parsing here
     sys.exit(main(sys.argv[1:]))
 
 
