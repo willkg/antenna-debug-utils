@@ -192,5 +192,9 @@ def main(args):
         print '   %s' % (crashes_out[crashid],)
 
 
-if __name__ == '__main__':
+def cli_main():
     sys.exit(main(sys.argv[1:]))
+
+
+if __name__ == '__main__':
+    cli_main()

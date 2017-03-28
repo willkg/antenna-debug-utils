@@ -132,6 +132,9 @@ def check_for_crashes(channel, queue, conn, bucket):
 
 
 def main(args):
+    if args is None:
+        args = sys.argv[1:]
+
     rmq = build_pika_connection(
         host=get_from_env('HOST'),
         port=int(get_from_env('PORT')),
@@ -153,5 +156,9 @@ def main(args):
         time.sleep(1)
 
 
-if __name__ == '__main__':
+def cli_main():
     sys.exit(main(sys.argv[1:]))
+
+
+if __name__ == '__main__':
+    cli_main()
