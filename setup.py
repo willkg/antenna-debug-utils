@@ -34,8 +34,8 @@ setup(
     entry_points="""
         [console_scripts]
         faux-processor=antenna_debug_utils.faux_processor:cli_main
-        log-parser=antenna_debug_utils.log_parser:main
-        verify-crashids=antenna_debug_utils.verify_crashids:main
+        log-parser=antenna_debug_utils.log_parser:cli_main
+        verify-crashids=antenna_debug_utils.verify_crashids:cli_main
     """,
     classifiers=[
         'Development Status :: 3 - Alpha',
