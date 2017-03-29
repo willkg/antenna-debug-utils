@@ -58,6 +58,8 @@ Arguments:
 
     The log file you want to parse.
 
+    This handles .gz files.
+
 
 Quickstart for verify crashids
 ==============================
