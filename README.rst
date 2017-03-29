@@ -9,18 +9,36 @@ wrote it very quickly to help me figure out how load tests were going.
 :Author: Will Kahn-Greene
 
 
-Quickstart for log parser
-=========================
-
-This uses Python 2.7 without any additional dependencies.
+Install
+=======
 
 1. Clone the repo::
 
-       git clone https://github.com/willkg/antenna-log-parser
+       git clone https://github.com/willkg/antenna-debug-utils
 
-2. Run it::
+2. If you have `pipsi <https://pypi.python.org/pypi/pipsi>`_, you can then do::
 
-       python log_parser.py <START> <END> <FILENAME>
+       cd antenna-debug-utils
+       pipsi install -e .
+
+
+   If you do not have pipsi or don't want to use it, you can do::
+
+       cd antenna-debug-utils
+
+       # create a python3 virtualenv
+
+       # activate your virtualenv
+
+       python setup.py -e .
+
+
+Quickstart for log parser
+=========================
+
+Usage::
+
+    log_parser <START> <END> <FILENAME> [<FILENAME> ...]
 
 
 Arguments:
@@ -39,3 +57,15 @@ Arguments:
 **FILENAME**
 
     The log file you want to parse.
+
+
+Quickstart for verify crashids
+==============================
+
+FIXME(willkg): Write this
+
+
+Quickstart for faux processor
+=============================
+
+FIXME(willkg): Write this
