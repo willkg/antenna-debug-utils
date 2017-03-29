@@ -30,7 +30,11 @@ setup(
     zip_safe=True,
     packages=find_packages(),
     include_package_data=True,
-    install_requires=[],
+    install_requires=[
+        'boto3',
+        'everett>=0.8',
+        'pika',
+    ],
     entry_points="""
         [console_scripts]
         faux-processor=antenna_debug_utils.faux_processor:cli_main
