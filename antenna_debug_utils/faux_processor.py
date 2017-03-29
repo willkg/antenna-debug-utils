@@ -40,7 +40,10 @@ import time
 
 import boto3
 from botocore.client import Config
+from everett.component import ConfigOptions, RequiredConfigMixin
 import pika
+
+from antenna_debug_utils.util import run_program
 
 
 PIKA_EXCEPTIONS = (
@@ -86,12 +89,12 @@ def build_pika_connection(host, port, virtual_host, user, password):
     )
 
 
-def get_conn():
+def get_conn(region):
     session = boto3.session.Session()
 
     return session.client(
         service_name='s3',
-        region_name=get_from_env('S3_REGION'),
+        region_name=region,
         config=Config(s3={'addressing_style': 'path'})
     )
 
@@ -131,29 +134,71 @@ def check_for_crashes(channel, queue, conn, bucket):
             logging.error('Failed to HEAD crash: %s %s', crashid, exc)
 
 
-def main(args):
-    if args is None:
-        args = sys.argv[1:]
-
-    rmq = build_pika_connection(
-        host=get_from_env('HOST'),
-        port=int(get_from_env('PORT')),
-        virtual_host=get_from_env('VIRTUAL_HOST'),
-        user=get_from_env('USER'),
-        password=get_from_env('PASSWORD')
+class ProcessorProgram(RequiredConfigMixin):
+    required_config = ConfigOptions()
+    required_config.add_option(
+        'host',
+        doc='RabbitMQ host to connect to.'
+    )
+    required_config.add_option(
+        'port',
+        parser=int,
+        doc='Port for the RabbitMQ host to connect to.'
+    )
+    required_config.add_option(
+        'virtual_host',
+        doc='Virtual host for RabbitMQ.'
+    )
+    required_config.add_option(
+        'user',
+        doc='RabbitMQ user to use.'
+    )
+    required_config.add_option(
+        'password',
+        doc='RabbitMQ password to use.'
+    )
+    required_config.add_option(
+        'queue',
+        doc='RabbitMQ queue to use.'
     )
 
-    queue = get_from_env('QUEUE')
-    channel = rmq.channel()
-    channel.queue_declare(queue=queue)
+    required_config.add_option(
+        's3_region',
+        default='us-west-1',
+        doc='S3 region of the S3 bucket.'
+    )
+    required_config.add_option(
+        's3_bucket',
+        doc='S3 bucket to check for crashes.'
+    )
 
-    bucket = get_from_env('S3_BUCKET')
-    conn = get_conn()
+    def __init__(self, config):
+        self.config = config.with_options(self)
 
-    logging.info('Entering loop. Ctrl-C at any time to break out.')
-    while True:
-        check_for_crashes(channel, queue, conn, bucket)
-        time.sleep(1)
+    def invoke(self):
+        rmq = build_pika_connection(
+            host=self.config('host'),
+            port=self.config('port'),
+            virtual_host=self.config('virtual_host'),
+            user=self.config('user'),
+            password=self.config('password'),
+        )
+
+        queue = self.config('queue')
+        channel = rmq.channel()
+        channel.queue_declare(queue=queue)
+
+        bucket = self.config('s3_bucket')
+        conn = get_conn()
+
+        logging.info('Entering loop. Ctrl-C at any time to break out.')
+        while True:
+            check_for_crashes(channel, queue, conn, bucket)
+            time.sleep(1)
+
+
+def main(args):
+    sys.exit(run_program('faux-processor', ProcessorProgram, args))
 
 
 def cli_main():
