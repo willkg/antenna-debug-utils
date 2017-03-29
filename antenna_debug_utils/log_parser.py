@@ -10,10 +10,13 @@ This analyzes what happened in some period of time and spits out stats.
 
 import argparse
 from collections import namedtuple
+import gzip
 import sys
 
-CRASH_ID_LENGTH = 36
 
+GZIP_HEADER = b'\037\213'
+
+CRASH_ID_LENGTH = 36
 
 RECEIVE = 'receive'
 SAVE = 'save'
@@ -103,8 +106,18 @@ def parse_files(start_date, end_date, filenames):
     crashes_out = {}
 
     for filename in filenames:
-        with open(filename, 'r') as fp:
+        with open(filename, 'rb') as fp:
+            possible_header = fp.read(2)
+
+        if possible_header == GZIP_HEADER:
+            opener = gzip.open
+        else:
+            opener = open
+
+        with opener(filename, 'r') as fp:
             for line in fp:
+                line = line.decode('utf-8')
+
                 if not line.startswith('[') or '[ANTENNA' not in line:
                     continue
 
