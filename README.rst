@@ -1,9 +1,13 @@
-==================
-Antenna log parser
-==================
+===================
+Antenna debug utils
+===================
 
-This is a log parser for `Antenna <https://github.com/mozilla/antenna>`_ logs. I
-wrote it very quickly to help me figure out how load tests were going.
+This is a series of debug utilities that I wrote while debugging various parts
+of `Antenna <https://github.com/mozilla/antenna>`_, doing load tests and making
+it ship shape.
+
+These scripts were written with the intention of throwing them away. They're
+here in case I need them again.
 
 :License: MPLv2
 :Author: Will Kahn-Greene
