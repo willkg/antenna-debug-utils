@@ -135,6 +135,8 @@ def check_for_crashes(channel, queue, conn, bucket):
 
 
 class ProcessorProgram(RequiredConfigMixin):
+    program_name = 'faux-processor'
+
     required_config = ConfigOptions()
     required_config.add_option(
         'host',
@@ -198,7 +200,7 @@ class ProcessorProgram(RequiredConfigMixin):
 
 
 def main(args):
-    sys.exit(run_program('faux-processor', ProcessorProgram, args))
+    sys.exit(run_program(ProcessorProgram, args))
 
 
 def cli_main():

@@ -23,9 +23,9 @@ def print_error(msg):
     sys.stderr.write(msg)
 
 
-def run_program(progname, config_class, args, parser=None):
+def run_program(app, args, parser=None):
     if parser is None:
-        parser = argparse.ArgumentParser(prog=progname)
+        parser = argparse.ArgumentParser(prog=app.program_name)
 
     parser.add_argument(
         '--config',
@@ -35,7 +35,7 @@ def run_program(progname, config_class, args, parser=None):
         ),
     )
 
-    options = config_class.get_required_config()
+    options = app.get_required_config()
 
     for opt in options:
         # We don't enforce required here--we do that in a later pass so we can
@@ -54,7 +54,7 @@ def run_program(progname, config_class, args, parser=None):
 
         parser.add_argument('--%s' % opt.key.lower(), **kwargs)
 
-    parser.set_defaults(handler=config_class)
+    parser.set_defaults(handler=app)
 
     # Parse the args--this will exit if there's a --help
     vals, extra = parser.parse_known_args(args)
@@ -69,7 +69,7 @@ def run_program(progname, config_class, args, parser=None):
     # Now go through and make sure all the required options were supplied.
     missing_opts = []
     parse_errors = []
-    comp_config = config.with_options(config_class)
+    comp_config = config.with_options(app)
     for opt in options:
         val = getattr(vals, opt.key.lower(), NO_VALUE)
         if val is NO_VALUE:
