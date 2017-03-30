@@ -12,6 +12,14 @@ wrote it very quickly to help me figure out how load tests were going.
 Install
 =======
 
+Requirements:
+
+* Python 3
+* Either pipsi or some kind of virtual environment creation thingy
+
+
+Steps:
+
 1. Clone the repo::
 
        git clone https://github.com/willkg/antenna-debug-utils
@@ -45,38 +53,45 @@ Install
 Quickstart for log parser
 =========================
 
-Usage::
+This looks at a period of time in log files on the grephost and then looks
+at incoming crashes vs. crashes saved, then tells you what happened and
+how many might have gotten lost and which hosts were involved and so on.
 
-    log_parser <START> <END> <FILENAME> [<FILENAME> ...]
+For help::
 
-
-Arguments:
-
-**START** and **END**
-
-    This is the start and end date/time. The log parser is doing string
-    comparisons on the datestamp at the beginning of each line, so you can
-    specify the date or the date and time in any substring combination.
-
-    For example, if you want to look at everything on 2017-03-20, you'd do::
-
-        python log_parser.py 2017-03-20 2017-03-21 <FILENAME>
+    log-parser --help
 
 
-**FILENAME**
+Example runs::
 
-    The log file you want to parse.
-
-    This handles .gz files.
+    log-parser "2017-03-29 17:30" "2017-03-30 00:20" *.gz *.log
 
 
-Quickstart for verify crashids
-==============================
-
-FIXME(willkg): Write this
+This can handle text files and `.gz` files.
 
 
 Quickstart for faux processor
 =============================
+
+This will listen to a specified RabbitMQ queue on a specified RabbitMQ host
+and every crashid it sees, it'll check to see if that crashid exists in the
+specified S3 bucket.
+
+.. Note::
+
+   It consumes crashids from the queue.
+
+
+For help::
+
+    faux-processor --help
+
+
+You can provide all the arguments on the command line or alternately
+via an ENV file which you specify using the ``-config`` option.
+
+
+Quickstart for verify crashids
+==============================
 
 FIXME(willkg): Write this
