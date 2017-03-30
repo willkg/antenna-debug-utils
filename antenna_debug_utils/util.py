@@ -49,8 +49,6 @@ def run_program(app, args, parser=None):
         if opt.default is not NO_VALUE:
             kwargs['default'] = opt.default
             kwargs['help'] += ' Default is %s.' % opt.default
-        else:
-            kwargs['default'] = NO_VALUE
 
         parser.add_argument('--%s' % opt.key.lower(), **kwargs)
 
@@ -71,20 +69,14 @@ def run_program(app, args, parser=None):
     parse_errors = []
     comp_config = config.with_options(app)
     for opt in options:
-        val = getattr(vals, opt.key.lower(), NO_VALUE)
-        if val is NO_VALUE:
-            if opt.default is NO_VALUE:
-                missing_opts.append(opt.key.lower())
-
-        else:
-            try:
-                val = comp_config(opt.key.lower())
-            except ConfigurationMissingError as cme:
-                missing_opts.append(opt.key.lower())
-            except Exception as exc:
-                parse_errors.append(
-                    (opt.key.lower(), str(exc))
-                )
+        try:
+            comp_config(opt.key.lower())
+        except ConfigurationMissingError as cme:
+            missing_opts.append(opt.key.lower())
+        except Exception as exc:
+            parse_errors.append(
+                (opt.key.lower(), str(exc))
+            )
 
     if missing_opts:
         parser.print_usage(sys.stderr)
