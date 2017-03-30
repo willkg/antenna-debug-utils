@@ -33,6 +33,15 @@ Install
        python setup.py -e .
 
 
+.. Note::
+
+   These utilities are all pretty much in the vein of "write once, use once,
+   throwaway". They might work for you. They might have bugs.
+
+   Figured I'd collect them in case they were handy again some day.
+
+
+
 Quickstart for log parser
 =========================
 
