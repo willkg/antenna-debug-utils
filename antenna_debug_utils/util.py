@@ -19,6 +19,10 @@ def indent(msg, prefix='    '):
     )
 
 
+def print_error(msg):
+    sys.stderr.write(msg)
+
+
 def run_program(progname, config_class, args, parser=None):
     if parser is None:
         parser = argparse.ArgumentParser(prog=progname)
@@ -84,20 +88,17 @@ def run_program(progname, config_class, args, parser=None):
 
     if missing_opts:
         parser.print_usage(sys.stderr)
-        parser._print_message(
-            (
-                'the following are required: %s\n' %
-                ', '.join([opt for opt in missing_opts])
-            ),
-            sys.stderr
+        print_error(
+            'the following are required: %s\n' %
+            ', '.join([opt for opt in missing_opts])
         )
         return 2
 
     if parse_errors:
         parser.print_usage(sys.stderr)
-        parser._print_message('the following have value errors:\n', sys.stderr)
+        print_error('the following have value errors:\n')
         for opt, msg in parse_errors:
-            parser._print_message('%s:\n%s\n' % (opt, indent(msg)), sys.stderr)
+            print_error('%s:\n%s\n' % (opt, indent(msg)))
         return 2
 
     return vals.handler(config).invoke()
