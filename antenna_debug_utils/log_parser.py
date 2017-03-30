@@ -116,7 +116,8 @@ def parse_files(start_date, end_date, filenames):
 
         with opener(filename, 'r') as fp:
             for line in fp:
-                line = line.decode('utf-8')
+                if not isinstance(line, str):
+                    line = line.decode('utf-8')
 
                 if not line.startswith('[') or '[ANTENNA' not in line:
                     continue
@@ -174,31 +175,63 @@ def main(args):
     print()
     print('total crashes in:  %d' % len(crashes_in))
     print('total crashes out: %d' % len(crashes_out))
+    print('delta:             %d' % (len(crashes_in) - len(crashes_out)))
+    print('percent success:   %2.5f' % (100.0 - (len(crashes_out) / len(crashes_in))))
     print()
 
     print('Hosts (%d):' % len(hostinfo_map))
-    for host, hostinfo in sorted(hostinfo_map.items()):
-        print('   %20s %4s %28s %28s %6s %6s %s' % (
+    print()
+
+    fine_hosts = [
+        hostinfo for host, hostinfo in hostinfo_map.items()
+        if len(hostinfo.crashes_in) == len(hostinfo.crashes_out)
+    ]
+    print('Hosts that did fine (%d):' % len(fine_hosts))
+    for hostinfo in sorted(fine_hosts, key=lambda x: (x.host, int(x.pid))):
+        print('   %-68s  %3s  %26s  %26s  %6s  %6s' % (
             hostinfo.host,
             hostinfo.pid,
             hostinfo.start,
             hostinfo.stop,
             len(hostinfo.crashes_in),
-            len(hostinfo.crashes_out),
-            (len(hostinfo.crashes_in) == len(hostinfo.crashes_out))
+            len(hostinfo.crashes_out)
         ))
-    print('')
+    print()
+
+    troubled_hosts = [
+        hostinfo for host, hostinfo in hostinfo_map.items()
+        if len(hostinfo.crashes_in) != len(hostinfo.crashes_out)
+    ]
+    print('Hosts that had trouble (%d):' % len(troubled_hosts))
+    for hostinfo in sorted(troubled_hosts, key=lambda x: x.start):
+        print('   %-68s  %3s  %26s  %26s  %6s  %6s' % (
+            hostinfo.host,
+            hostinfo.pid,
+            hostinfo.start,
+            hostinfo.stop,
+            len(hostinfo.crashes_in),
+            len(hostinfo.crashes_out)
+        ))
+    print()
 
     in_set = set(crashes_in.keys())
     out_set = set(crashes_out.keys())
 
     print('Received but not saved (%d):' % len((in_set - out_set)))
-    for crashid in (in_set - out_set):
-        print('   %s' % (crashes_in[crashid],))
+    for crashid in sorted(in_set - out_set, key=lambda x: crashes_in[x].timestamp):
+        print('   %s  %-70s  %s' % (
+            crashes_in[crashid].timestamp,
+            crashes_in[crashid].host,
+            crashes_in[crashid].crashid,
+        ))
 
     print('Saved but not received (%d):' % len((out_set - in_set)))
-    for crashid in (out_set - in_set):
-        print('   %s' % (crashes_out[crashid],))
+    for crashid in sorted(out_set - in_set, key=lambda x: crashes_out[x].timestamp):
+        print('   %s  %-70s  %s' % (
+            crashes_out[crashid].timestamp,
+            crashes_out[crashid].host,
+            crashes_out[crashid].crashid,
+        ))
 
 
 def cli_main():
