@@ -10,6 +10,7 @@ This analyzes what happened in some period of time and spits out stats.
 
 import argparse
 from collections import namedtuple
+import datetime
 import gzip
 import sys
 
@@ -158,6 +159,22 @@ def parse_files(start_date, end_date, filenames):
     return hostinfo_map, crashes_in, crashes_out
 
 
+def zero_fill(start_ts, end_ts):
+    start_ts = datetime.datetime.strptime(start_ts.split('+')[0].strip(), '%Y-%m-%d %H:%M:%S')
+    end_ts = datetime.datetime.strptime(end_ts.split('+')[0].strip(), '%Y-%m-%d %H:%M:%S')
+
+    start_ts = start_ts.replace(minute=0)
+    end_ts = end_ts.replace(minute=59)
+
+    slots = [start_ts.strftime('%H:%M')]
+
+    while start_ts < end_ts:
+        start_ts = start_ts + datetime.timedelta(minutes=10)
+        slots.append(start_ts.strftime('%H:%M'))
+
+    return slots
+
+
 def main(args):
     parser = argparse.ArgumentParser(
         description='Antenna log parser',
@@ -171,12 +188,24 @@ def main(args):
 
     hostinfo_map, crashes_in, crashes_out = parse_files(args.start, args.end, args.filename)
 
+    start_ts = None
+    end_ts = None
+    for crash in crashes_in.values():
+        if start_ts is None or crash.timestamp < start_ts:
+            start_ts = crash.timestamp
+        if end_ts is None or crash.timestamp > end_ts:
+            end_ts = crash.timestamp
+
     print('From %s to %s' % (args.start, args.end))
     print()
     print('total crashes in:  %d' % len(crashes_in))
     print('total crashes out: %d' % len(crashes_out))
     print('delta:             %d' % (len(crashes_in) - len(crashes_out)))
-    print('percent success:   %2.5f' % (100.0 - (len(crashes_out) / len(crashes_in))))
+    pct = (len(crashes_out) / len(crashes_in)) * 100
+    print('percent success:   %2.5f' % pct)
+    print()
+    print('first crash received:  %s' % start_ts)
+    print('last crash received:   %s' % end_ts)
     print()
 
     print('Hosts (%d):' % len(hostinfo_map))
@@ -216,22 +245,49 @@ def main(args):
 
     in_set = set(crashes_in.keys())
     out_set = set(crashes_out.keys())
+    slots = zero_fill(start_ts, end_ts)
+
+    # HH:M -> list of crashes
+    buckets = {}
 
     print('Received but not saved (%d):' % len((in_set - out_set)))
     for crashid in sorted(in_set - out_set, key=lambda x: crashes_in[x].timestamp):
+        crash = crashes_in[crashid]
         print('   %s  %-70s  %s' % (
-            crashes_in[crashid].timestamp,
-            crashes_in[crashid].host,
-            crashes_in[crashid].crashid,
+            crash.timestamp,
+            crash.host,
+            crash.crashid
         ))
+        buckets.setdefault(crash.timestamp[11:15] + '0', []).append(crash)
 
+    if buckets:
+        print()
+        print('By timestamp:')
+
+        for slot in slots:
+            crashes = buckets.get(slot, [])
+            print('   %s: %s' % (slot, len(crashes)))
+        print()
+
+    buckets = {}
     print('Saved but not received (%d):' % len((out_set - in_set)))
     for crashid in sorted(out_set - in_set, key=lambda x: crashes_out[x].timestamp):
+        crash = crashes_out[crashid]
         print('   %s  %-70s  %s' % (
-            crashes_out[crashid].timestamp,
-            crashes_out[crashid].host,
-            crashes_out[crashid].crashid,
+            crash.timestamp,
+            crash.host,
+            crash.crashid,
         ))
+        buckets.setdefault(crash.timestamp[11:15] + '0', []).append(crash)
+
+    if buckets:
+        print()
+        print('By timestamp:')
+
+        for slot in slots:
+            crashes = buckets.get(slot, [])
+            print('   %s: %s' % (slot, len(crashes)))
+        print()
 
 
 def cli_main():
