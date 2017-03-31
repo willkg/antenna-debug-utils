@@ -33,6 +33,7 @@ It'll check the queue every second and pull stuff.
 """
 
 import logging
+import logging.config
 import os
 import socket
 import sys
@@ -58,10 +59,34 @@ PIKA_EXCEPTIONS = (
 ACCEPT = '0'
 DEFER = '1'
 
-logging.basicConfig()
+logging.config.dictConfig({
+    'version': 1,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'level': 'DEBUG',
+        },
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': 'faux_processor.log',
+            'level': 'INFO',
+        },
+    },
+    'root': {
+        'handlers': ['console', 'file'],
+        'level': 'DEBUG',
+    },
+    'loggers': {
+        'processor': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+        }
+    }
+})
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+
+logger = logging.getLogger('processor')
+logger.setLevel(logging.DEBUG)
 
 
 def get_from_env(key):
@@ -115,11 +140,15 @@ def check_for_crashes(channel, queue, conn, bucket):
     while True:
         # Pull a crash id from the queue
         try:
-            crashid = channel.basic_get(queue=queue)
-            logging.info('%s pulled from rabbitmq queue', crashid)
+            method_frame, header_frame, crashid = channel.basic_get(queue=queue)
+            if method_frame is None:
+                return
+
+            crashid = crashid.decode('utf-8')
+            logger.info('%s: pulled from rabbitmq queue', crashid)
 
         except Exception as exc:
-            logging.error('Failed to get crashid from queue: %s', exc)
+            logger.error('failed to get crashid from queue: %s', exc)
             return
 
         # Verify it on s3
@@ -129,9 +158,12 @@ def check_for_crashes(channel, queue, conn, bucket):
                 Bucket=bucket,
                 Key=key
             )
-            logging.info('%s exists on s3--success!', crashid)
+            logger.info('%s: exists on s3--success!', crashid)
         except Exception as exc:
-            logging.error('Failed to HEAD crash: %s %s', crashid, exc)
+            logger.error('failed to HEAD crash: %s %s', crashid, exc)
+
+        # FIXME(willkg): temporary until we fix this
+        break
 
 
 class ProcessorProgram(RequiredConfigMixin):
@@ -188,23 +220,31 @@ class ProcessorProgram(RequiredConfigMixin):
 
         queue = self.config('queue')
         channel = rmq.channel()
-        channel.queue_declare(queue=queue)
 
         bucket = self.config('s3_bucket')
-        conn = get_conn()
+        conn = get_conn(self.config('s3_region'))
 
-        logging.info('Entering loop. Ctrl-C at any time to break out.')
+        # HEAD the bucket to verify s3 connection works and bucket exists
+        logging.info('Testing the bucket...')
+        conn.head_bucket(Bucket=bucket)
+
+        logging.info('Bucket exists. Continuing.')
+
+        print('Entering loop. Ctrl-C at any time to break out.')
         while True:
             check_for_crashes(channel, queue, conn, bucket)
+            logger.info('Thump.')
             time.sleep(1)
+
+            # FIXME(willkg): Temporary break until we fix this
+            break
 
 
 def main(args):
-    sys.exit(run_program(ProcessorProgram, args))
+    return run_program(ProcessorProgram, args)
 
 
 def cli_main():
-    # FIXME(willkg): Fix argument parsing here
     sys.exit(main(sys.argv[1:]))
 
 
