@@ -61,27 +61,28 @@ DEFER = '1'
 
 logging.config.dictConfig({
     'version': 1,
+    'formatters': {
+        'basic': {
+            'format': '[%(asctime)s] [%(levelname)s] %(name)s: %(message)s'
+        },
+    },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
             'level': 'DEBUG',
+            'formatter': 'basic',
         },
         'file': {
             'class': 'logging.FileHandler',
             'filename': 'faux_processor.log',
             'level': 'INFO',
+            'formatter': 'basic',
         },
     },
     'root': {
         'handlers': ['console', 'file'],
         'level': 'DEBUG',
     },
-    'loggers': {
-        'processor': {
-            'handlers': ['console', 'file'],
-            'level': 'DEBUG',
-        }
-    }
 })
 
 
@@ -114,12 +115,23 @@ def build_pika_connection(host, port, virtual_host, user, password):
     )
 
 
-def get_conn(region):
-    session = boto3.session.Session()
+def get_conn(config):
+    logger.info('S3_ACCESS_KEY: %s', config('s3_access_key'))
+    logger.info('S3_SECRET_ACCESS_KEY: %s', '*****' if config('s3_secret_access_key') else '')
+    logger.info('S3_REGION: %s', config('s3_region'))
+    logger.info('S3_BUCKET: %s', config('s3_bucket'))
+
+    session_kwargs = {}
+    if config('s3_access_key') and config('s3_secret_access_key'):
+        logger.info('S3_ACCESS_KEY and S3_SECRET_ACCESS_KEY set--using those.')
+        session_kwargs['aws_access_key_id'] = config('s3_access_key')
+        session_kwargs['aws_secret_access_key'] = config('s3_secret_access_key')
+
+    session = boto3.session.Session(**session_kwargs)
 
     return session.client(
         service_name='s3',
-        region_name=region,
+        region_name=config('s3_region'),
         config=Config(s3={'addressing_style': 'path'})
     )
 
@@ -197,6 +209,15 @@ class ProcessorProgram(RequiredConfigMixin):
     )
 
     required_config.add_option(
+        's3_access_key',
+        doc='AWS S3 access_key if you need one.'
+    )
+    required_config.add_option(
+        's3_secret_access_key',
+        doc='AWS S3 secret_access_key if you need one.'
+    )
+
+    required_config.add_option(
         's3_region',
         default='us-west-1',
         doc='S3 region of the S3 bucket.'
@@ -222,13 +243,13 @@ class ProcessorProgram(RequiredConfigMixin):
         channel = rmq.channel()
 
         bucket = self.config('s3_bucket')
-        conn = get_conn(self.config('s3_region'))
+        conn = get_conn(self.config)
 
         # HEAD the bucket to verify s3 connection works and bucket exists
-        logging.info('Testing the bucket...')
+        logger.info('Testing the bucket "%s"...', bucket)
         conn.head_bucket(Bucket=bucket)
 
-        logging.info('Bucket exists. Continuing.')
+        logger.info('Bucket exists. Continuing.')
 
         print('Entering loop. Ctrl-C at any time to break out.')
         while True:
