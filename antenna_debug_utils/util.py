@@ -47,7 +47,6 @@ def run_program(app, args, parser=None):
         }
 
         if opt.default is not NO_VALUE:
-            kwargs['default'] = opt.default
             kwargs['help'] += ' Default is %s.' % opt.default
 
         parser.add_argument('--%s' % opt.key.lower(), **kwargs)

@@ -41,6 +41,7 @@ import time
 
 import boto3
 from botocore.client import Config
+from botocore.exceptions import ClientError
 from everett.component import ConfigOptions, RequiredConfigMixin
 import pika
 
@@ -171,11 +172,11 @@ def check_for_crashes(channel, queue, conn, bucket):
                 Key=key
             )
             logger.info('%s: exists on s3--success!', crashid)
-        except Exception as exc:
-            logger.error('failed to HEAD crash: %s %s', crashid, exc)
+        except ClientError as exc:
+            logger.error('%s: %s', crashid, exc)
 
-        # FIXME(willkg): temporary until we fix this
-        break
+        # Acknowledge the crashid
+        channel.basic_ack(method_frame.delivery_tag)
 
 
 class ProcessorProgram(RequiredConfigMixin):
@@ -231,6 +232,8 @@ class ProcessorProgram(RequiredConfigMixin):
         self.config = config.with_options(self)
 
     def invoke(self):
+        logger.info('FAUX-PROCESSOR STARTING UP...')
+
         rmq = build_pika_connection(
             host=self.config('host'),
             port=self.config('port'),
@@ -256,9 +259,6 @@ class ProcessorProgram(RequiredConfigMixin):
             check_for_crashes(channel, queue, conn, bucket)
             logger.info('Thump.')
             time.sleep(1)
-
-            # FIXME(willkg): Temporary break until we fix this
-            break
 
 
 def main(args):
