@@ -36,18 +36,26 @@ from botocore.client import Config
 import gevent
 
 
-BUCKET=''
-REGION=''
+BUCKET = ''
+REGION = ''
+ACCESS_KEY_ID = ''
+SECRET_ACCESS_KEY = ''
 
 
 def get_conn():
     session = boto3.session.Session()
 
-    return session.client(
-        service_name='s3',
-        region_name=REGION,
-        config=Config(s3={'addressing_style': 'path'})
-    )
+    kwargs = {
+        'service_name': 's3',
+        'region_name': REGION,
+        'config': Config(s3={'addressing_style': 'path'})
+    }
+
+    if ACCESS_KEY_ID and SECRET_ACCESS_KEY:
+        kwargs['aws_access_key_id'] = ACCESS_KEY_ID
+        kwargs['aws_secret_access_key'] = SECRET_ACCESS_KEY
+
+    return session.client(**kwargs)
 
 
 def get_date_from_crash_id(crash_id):
